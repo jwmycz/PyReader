@@ -6,8 +6,6 @@
 
 ---
 
-## 项目标识（发布 GitHub 后取消转义使用）
-
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue)
 ![Python](https://img.shields.io/badge/python-3.10%2B-yellow)
 ![wxPython](https://img.shields.io/badge/wxPython-Latest-green)
