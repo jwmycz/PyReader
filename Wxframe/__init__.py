@@ -20,7 +20,7 @@ _ = gettext.gettext
 class MyFrame1 ( wx.Frame ):
 
 	def __init__(self, parent):
-		wx.Frame.__init__ (self, parent, id = wx.ID_ANY, title = _(u"阅读 v0.1"), pos = wx.DefaultPosition, size = wx.Size( 1178,730 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL)
+		wx.Frame.__init__ (self, parent, id = wx.ID_ANY, title = _(u"阅读 v0.2"), pos = wx.DefaultPosition, size = wx.Size( 1178,730 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL)
 
 		self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
 		self.SetBackgroundColour(wx.Colour( 239, 235, 235 ))

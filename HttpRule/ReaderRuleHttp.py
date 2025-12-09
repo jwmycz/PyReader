@@ -1,3 +1,4 @@
+from urllib.parse import quote
 from . import *
 from utils.tools import *
 from lxml import etree
@@ -34,8 +35,9 @@ class ReaderRuleHttp(HttpRule):
             self.content_next_url_xpath=source.get('content_next_url_xpath','')
             self.content_next_keyword_xpath=source.get('content_next_keyword_xpath','')
             self.content_next_keyword=source.get('content_next_keyword','')
-            self.content_filter_type=source.get('content_filter_type','')
+            self.content_filter_type=source.get('content_filter_type',0)
             self.content_filter_keyword=source.get('content_filter_keyword','')
+            self.content_search_url_bool=source.get('content_search_url_bool',False)
 
     def get_encode(self):
         if self.query_charset==1 or self.query_types==0:
@@ -50,7 +52,7 @@ class ReaderRuleHttp(HttpRule):
         keyword = search_name.strip()
         charset = self.get_encode()
         if not is_url(keyword):
-            keyword = urllib.parse.quote(keyword,encoding=charset)
+            keyword = quote(keyword,encoding=charset)
         try:
             if self.query_method == "GET":
                 url = self.query_url.replace('%s', keyword)
@@ -64,7 +66,6 @@ class ReaderRuleHttp(HttpRule):
                 elif self.query_types == "Data":
                     headers.update({'Content-Type': 'application/x-www-form-urlencoded'})
                     data = await self.post(self.query_url, data=params,headers=headers)
-
                 else:
                     logger.warning(f"未处理的 query_charset: {self.query_types}")
 
@@ -111,55 +112,109 @@ class ReaderRuleHttp(HttpRule):
         return records
 
     async def get_change_book(self, data):
-        page_list = []
         title_list = []
         url_list = []
 
         newdata = data.strip().split('|')
-        url = self.host.strip() + newdata[2].strip()
+        raw_url = newdata[2].strip()
+        url = raw_url if raw_url.startswith("http") else self.host.strip() + raw_url
+        self.searchurl=url
+        visited = set()  # 防死循环
 
         while url:
+            if url in visited:
+                logger.warning(f"重复页面检测到, 停止抓取: {url}")
+                break
+            visited.add(url)
+
             try:
-                # 异步请求
                 response = await self.get(url)
-
                 charset = self.get_encode()
-                response.encoding=charset
-                text=response.text
-                xls = etree.HTML(text)
+                if charset:
+                    response.encoding = charset
+                xls = etree.HTML(response.text)
 
-                # xpath解析
-                chapter_pages = xls.xpath(self.chapter_next_url_xpath) or []
-                chapter_titles = xls.xpath(self.chapter_title_xpath) or []
-                chapter_urls = xls.xpath(self.chapter_url_xpath) or []
+                # 解析标题和链接
+                titles = [t.strip() for t in xls.xpath(self.chapter_title_xpath) or []]
+                urls = [u.strip() for u in xls.xpath(self.chapter_url_xpath) or []]
 
-                page_list.extend(chapter_pages)
-                title_list.extend(chapter_titles)
-                url_list.extend(chapter_urls)
+                # 对齐长度，防止错位
+                min_len = min(len(titles), len(urls))
+                title_list.extend(titles[:min_len])
+                url_list.extend(urls[:min_len])
+
                 if self.enable_chapter_next != 1:
                     break
 
+                # 下一页处理
                 nexturl_list = xls.xpath(self.chapter_next_url_xpath) or []
                 keyword_list = xls.xpath(self.chapter_next_keyword_xpath) or []
 
-                if nexturl_list and keyword_list and keyword_list[0] == self.chapter_next_keyword:
-                    url = self.host.strip() + nexturl_list[0]
+                if not nexturl_list or not keyword_list:
+                    break
+
+                # 符合关键字才继续
+                if keyword_list[0].strip() == self.chapter_next_keyword:
+                    next_url = nexturl_list[0].strip()
+                    url = next_url if next_url.startswith("http") else self.host.strip() + next_url
+                else:
+                    break
+
+            except Exception as e:
+                logger.error(f"章节抓取失败: {e}")
+                break
+
+        return title_list, url_list
+
+    async def get_content(self, url):
+        contents = []
+        if self.content_search_url_bool==True:
+            url =self.searchurl+url.strip()
+        if not url.startswith("http"):
+            url = self.host.strip() + url.strip()
+        print(url)
+        while url:
+            try:
+                response = await self.get(url)
+                charset = self.get_encode()
+                response.encoding = charset
+                text = response.text
+
+                xls = etree.HTML(text)
+
+                # 获取正文，并清洗空格与 HTML 垃圾标签
+                content_list = xls.xpath(self.content_xpath) or []
+                cleaned = [
+                    ''.join(item).strip().replace('\u3000', '').replace('\xa0', '')
+                    for item in content_list
+                ]
+                contents.extend(cleaned)
+
+                # 如果不支持翻页，退出
+                if self.enable_content_next != 1:
+                    break
+
+                # 下一页提取
+                next_url_list = xls.xpath(self.content_next_url_xpath) or []
+                keyword_list = xls.xpath(self.content_next_keyword_xpath) or []
+
+                # 校验安全性
+                if not next_url_list or not keyword_list:
+                    break
+
+                if keyword_list[0] == self.content_next_keyword:
+                    next_url = next_url_list[0].strip()
+                    if not next_url.startswith("http"):
+                        next_url = self.host.strip() + next_url
+                    url = next_url
                 else:
                     break
             except Exception as e:
-                logger.error("获取章节失败:", e)
+                print("内容提取失败:", e)
                 break
-        return page_list, title_list, url_list
 
-    async def get_content(self,url):
-        nowurl=self.host.strip()+url.strip()
-        response=await self.get(nowurl)
-        charset = self.get_encode()
-        response.encoding = charset
-        text = response.text
-        xls = etree.HTML(text)
-        content=xls.xpath(self.content_xpath)
-        ct=''
-        for i in content:
-            ct=ct + i
-        return ct
+        # 快速拼接字符串，提高性能
+        final_text = "\n\n".join(contents)
+        if self.content_filter_type==1:
+            final_text=final_text.replace(self.content_filter_keyword, " ")
+        return final_text

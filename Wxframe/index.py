@@ -120,13 +120,14 @@ class MainFrame(MyFrame1):
     def Search(self, event):
         wx.CallAfter(self.m_comboBox2.Set, [])
         search_name = self.m_textCtrl1.GetValue().strip()
+        print(search_name)
         if not search_name:
             return
         run_async(self._Search(search_name))
-        # asyncio.create_task(self._Search(search_name))
 
     async def _Search(self, search_name):
         req = ReaderRuleHttp(rule=self.rules)
+        print(req)
         self.req=req
         req.get_rule()
         try:
@@ -135,6 +136,7 @@ class MainFrame(MyFrame1):
             logger.error(e)
             result = []
         if result:
+            wx.MessageBox("搜索完毕", "提示", wx.OK | wx.ICON_INFORMATION)
             wx.CallAfter(self.m_comboBox2.Set, result)
 
 
@@ -148,16 +150,18 @@ class MainFrame(MyFrame1):
 
     async def _get_change_book(self, data):
         try:
-            page_list, title_list, url_list = await self.req.get_change_book(data)
+            title_list, url_list = await self.req.get_change_book(data)
 
         except Exception as e:
             logger.error(e)
-            page_list, title_list, url_list = []
-        self.page_list=page_list
+            title_list, url_list = []
+
         self.title_list=title_list
         self.url_list=url_list
         if title_list:
             wx.CallAfter(self.m_listBox1.Set, title_list)
+        else:
+            wx.MessageBox("未匹配到章节，请检查规则", "提示", wx.OK | wx.ICON_INFORMATION)
 
     def get_content(self, event):
         wx.CallAfter(self.m_textCtrl2.SetValue, '')
