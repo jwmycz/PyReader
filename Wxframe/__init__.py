@@ -20,7 +20,7 @@ _ = gettext.gettext
 class MyFrame1 ( wx.Frame ):
 
 	def __init__(self, parent):
-		wx.Frame.__init__ (self, parent, id = wx.ID_ANY, title = _(u"阅读 v0.2"), pos = wx.DefaultPosition, size = wx.Size( 1178,730 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL)
+		wx.Frame.__init__ (self, parent, id = wx.ID_ANY, title = _(u"阅读 v0.3"), pos = wx.DefaultPosition, size = wx.Size( 1178,730 ), style = wx.DEFAULT_FRAME_STYLE|wx.TAB_TRAVERSAL)
 
 		self.SetSizeHints(wx.DefaultSize, wx.DefaultSize)
 		self.SetBackgroundColour(wx.Colour( 239, 235, 235 ))
@@ -117,12 +117,27 @@ class MyFrame1 ( wx.Frame ):
 
 		bSizer1.Add(bSizer4, 1, wx.EXPAND, 5)
 
-		bSizer5 = wx.BoxSizer(wx.VERTICAL)
+		bSizer5 = wx.BoxSizer(wx.HORIZONTAL)
+
+		bSizer6 = wx.BoxSizer(wx.HORIZONTAL)
+
+		self.m_staticText2 = wx.StaticText(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
+		self.m_staticText2.Wrap(-1)
+
+		bSizer6.Add(self.m_staticText2, 0, wx.ALL, 5)
+
+
+		bSizer5.Add(bSizer6, 1, wx.EXPAND, 5)
+
+		bSizer7 = wx.BoxSizer(wx.VERTICAL)
 
 		self.m_staticText1 = wx.StaticText(self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0)
 		self.m_staticText1.Wrap(-1)
 
-		bSizer5.Add(self.m_staticText1, 1, wx.ALL|wx.ALIGN_RIGHT, 5)
+		bSizer7.Add(self.m_staticText1, 1, wx.ALL|wx.ALIGN_RIGHT, 5)
+
+
+		bSizer5.Add(bSizer7, 1, wx.EXPAND, 5)
 
 
 		bSizer1.Add(bSizer5, 0, wx.EXPAND, 5)

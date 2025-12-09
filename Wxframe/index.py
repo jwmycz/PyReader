@@ -119,6 +119,8 @@ class MainFrame(MyFrame1):
 
     def Search(self, event):
         wx.CallAfter(self.m_comboBox2.Set, [])
+        wx.CallAfter(self.m_listBox1.Set, [])
+        wx.CallAfter(self.m_textCtrl2.SetValue, '')
         search_name = self.m_textCtrl1.GetValue().strip()
         print(search_name)
         if not search_name:
@@ -132,9 +134,11 @@ class MainFrame(MyFrame1):
         req.get_rule()
         try:
             result = await req.get_title(search_name)
+            wx.CallAfter(self.m_staticText2.SetLabel, '加载中~~')
         except Exception as e:
             logger.error(e)
             result = []
+        wx.CallAfter(self.m_staticText2.SetLabel, '加载完毕~~')
         if result:
             wx.MessageBox("搜索完毕", "提示", wx.OK | wx.ICON_INFORMATION)
             wx.CallAfter(self.m_comboBox2.Set, result)
@@ -142,6 +146,7 @@ class MainFrame(MyFrame1):
 
     def change_book(self, event):
         wx.CallAfter(self.m_listBox1.Set, [])
+        wx.CallAfter(self.m_textCtrl2.SetValue, '')
         data=self.m_comboBox2.GetValue()
         logger.debug(f'选择书籍--》{data}')
         if not data:
@@ -150,6 +155,7 @@ class MainFrame(MyFrame1):
 
     async def _get_change_book(self, data):
         try:
+            wx.CallAfter(self.m_staticText2.SetLabel, '加载中~~')
             title_list, url_list = await self.req.get_change_book(data)
 
         except Exception as e:
@@ -158,10 +164,11 @@ class MainFrame(MyFrame1):
 
         self.title_list=title_list
         self.url_list=url_list
+        wx.CallAfter(self.m_staticText2.SetLabel, '加载完毕~~')
         if title_list:
             wx.CallAfter(self.m_listBox1.Set, title_list)
         else:
-            wx.MessageBox("未匹配到章节，请检查规则", "提示", wx.OK | wx.ICON_INFORMATION)
+            wx.MessageBox("未匹配到章节，请重试", "提示", wx.OK | wx.ICON_INFORMATION)
 
     def get_content(self, event):
         wx.CallAfter(self.m_textCtrl2.SetValue, '')
@@ -176,8 +183,10 @@ class MainFrame(MyFrame1):
 
     async def _get_content(self, url_name):
         try:
+            wx.CallAfter(self.m_staticText2.SetLabel, '加载中~~')
             content= await self.req.get_content(url_name)
         except Exception as e:
             logger.error(e)
             content= ''
+        wx.CallAfter(self.m_staticText2.SetLabel, '加载完毕~~')
         wx.CallAfter(self.m_textCtrl2.SetValue, content)

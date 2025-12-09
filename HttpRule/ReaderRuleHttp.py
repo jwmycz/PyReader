@@ -111,34 +111,100 @@ class ReaderRuleHttp(HttpRule):
 
         return records
 
+    # async def get_change_book(self, data):
+    #     title_list = []
+    #     url_list = []
+    #
+    #     newdata = data.strip().split('|')
+    #     raw_url = newdata[2].strip()
+    #     url = raw_url if raw_url.startswith("http") else self.host.strip() + raw_url
+    #     self.searchurl=url
+    #     visited = set()  # 防死循环
+    #     while url:
+    #         if url in visited:
+    #             logger.warning(f"重复页面检测到, 停止抓取: {url}")
+    #             break
+    #         visited.add(url)
+    #
+    #         try:
+    #             response = await self.get(url)
+    #             # print(response.text)
+    #             charset = self.get_encode()
+    #             if charset:
+    #                 response.encoding = charset
+    #             xls = etree.HTML(response.text)
+    #             print(response.text)
+    #             # 解析标题和链接
+    #             print(self.chapter_title_xpath)
+    #             print(self.chapter_url_xpath)
+    #             titles = [t for t in xls.xpath(self.chapter_title_xpath) or []]
+    #             urls = [u for u in xls.xpath(self.chapter_url_xpath) or []]
+    #             print(urls)
+    #             print(titles)
+    #             # 对齐长度，防止错位
+    #             min_len = min(len(titles), len(urls))
+    #             title_list.extend(titles[:min_len])
+    #             url_list.extend(urls[:min_len])
+    #
+    #
+    #             if self.enable_chapter_next != 1:
+    #                 break
+    #
+    #             # 下一页处理
+    #             nexturl_list = xls.xpath(self.chapter_next_url_xpath) or []
+    #             keyword_list = xls.xpath(self.chapter_next_keyword_xpath) or []
+    #
+    #             if not nexturl_list or not keyword_list:
+    #                 break
+    #
+    #             # 符合关键字才继续
+    #             if keyword_list[0].strip() == self.chapter_next_keyword:
+    #                 next_url = nexturl_list[0].strip()
+    #                 url = next_url if next_url.startswith("http") else self.host.strip() + next_url
+    #             else:
+    #                 break
+    #
+    #         except Exception as e:
+    #             logger.error(f"章节抓取失败: {e}")
+    #             break
+    #
+    #     return title_list, url_list
+    def normalize_url(self, u: str):
+        u = u.strip()
+        # 去掉末尾多余的斜杠
+        if u.endswith("/"):
+            u = u[:-1]
+        return u
+
     async def get_change_book(self, data):
         title_list = []
         url_list = []
 
-        newdata = data.strip().split('|')
-        raw_url = newdata[2].strip()
+        raw_url = data.strip().split('|')[2].strip()
         url = raw_url if raw_url.startswith("http") else self.host.strip() + raw_url
-        self.searchurl=url
-        visited = set()  # 防死循环
+        # url = self.normalize_url(url)
+        self.searchurl = url
+        print(url)
+        visited = set()
 
-        while url:
+        while True:
             if url in visited:
-                logger.warning(f"重复页面检测到, 停止抓取: {url}")
+                logger.warning(f"重复页面检测到，停止抓取: {url}")
                 break
             visited.add(url)
 
             try:
+                print(f'列表{url}')
                 response = await self.get(url)
                 charset = self.get_encode()
                 if charset:
                     response.encoding = charset
                 xls = etree.HTML(response.text)
-
-                # 解析标题和链接
-                titles = [t.strip() for t in xls.xpath(self.chapter_title_xpath) or []]
-                urls = [u.strip() for u in xls.xpath(self.chapter_url_xpath) or []]
-
-                # 对齐长度，防止错位
+                print(response.text)
+                titles = xls.xpath(self.chapter_title_xpath) or []
+                print(titles)
+                urls = xls.xpath(self.chapter_url_xpath) or []
+                print(urls)
                 min_len = min(len(titles), len(urls))
                 title_list.extend(titles[:min_len])
                 url_list.extend(urls[:min_len])
@@ -146,19 +212,37 @@ class ReaderRuleHttp(HttpRule):
                 if self.enable_chapter_next != 1:
                     break
 
-                # 下一页处理
-                nexturl_list = xls.xpath(self.chapter_next_url_xpath) or []
-                keyword_list = xls.xpath(self.chapter_next_keyword_xpath) or []
+                # 优先分页 XPath
+                nexturl_list = []
+                if self.enable_chapter_page == 1:
+                    nexturl_list = xls.xpath(self.chapter_page_xpath) or []
+                    logger.debug(f"page mode:{nexturl_list}")
 
-                if not nexturl_list or not keyword_list:
-                    break
-
-                # 符合关键字才继续
-                if keyword_list[0].strip() == self.chapter_next_keyword:
+                if nexturl_list:
                     next_url = nexturl_list[0].strip()
-                    url = next_url if next_url.startswith("http") else self.host.strip() + next_url
                 else:
+                    nexturl_list = xls.xpath(self.chapter_next_url_xpath) or []
+                    keyword_list = xls.xpath(self.chapter_next_keyword_xpath) or []
+
+                    # logger.debug(f"next mode:{nexturl_list} {keyword_list}")
+
+                    if not nexturl_list or not keyword_list:
+                        break
+
+                    if keyword_list[0].strip() != self.chapter_next_keyword:
+                        break
+
+                    next_url = nexturl_list[0].strip()
+
+                new_url = next_url if next_url.startswith("http") else self.host.strip() + next_url
+                new_url = self.normalize_url(new_url)
+
+                # 如果 URL 未变化则退出防死循环
+                if new_url == url:
+                    logger.warning(f"下一页地址未变化，终止抓取: {new_url}")
                     break
+
+                url = new_url
 
             except Exception as e:
                 logger.error(f"章节抓取失败: {e}")
@@ -179,7 +263,7 @@ class ReaderRuleHttp(HttpRule):
                 charset = self.get_encode()
                 response.encoding = charset
                 text = response.text
-
+                print(text)
                 xls = etree.HTML(text)
 
                 # 获取正文，并清洗空格与 HTML 垃圾标签
@@ -188,6 +272,7 @@ class ReaderRuleHttp(HttpRule):
                     ''.join(item).strip().replace('\u3000', '').replace('\xa0', '')
                     for item in content_list
                 ]
+                print(cleaned)
                 contents.extend(cleaned)
 
                 # 如果不支持翻页，退出
