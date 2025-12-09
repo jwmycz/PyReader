@@ -10,49 +10,44 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-yellow)
 ![wxPython](https://img.shields.io/badge/wxPython-Latest-green)
 
-
-
 ---
 
-## 软件截图
-
+## 软件界面
 
 阅读界面：
-![screenshot_reader](docs/images/screenshot_reader.png)
 
-书源管理界面：
-![screenshot_source](docs/images/screenshot_source.png)
+![阅读界面.png](./img/阅读界面.png)
 
+书源导入：
+![书源导入.png](./img/书源导入.png)
 
 ---
 
 ## 功能特性
 
-- 基于 wxPython 开发，界面轻量与易扩展  
-- 在线阅读与本地缓存下载  
-- 多书源支持，可在线切换书源  
-- 内置 Reader 源适配  
+- 基于 wxPython 开发，界面轻量与易扩展
+- 适配 Reader 源  
  参考项目: https://github.com/binbyu/Reader  
-- 支持自定义书源格式与书源编辑工具  
+- 支持自定义书源格式
 - 支持 Windows 与 Linux
 
 ---
 
 ## 自定义书源
 
-支持配置与导入自编写的书源  
-计划提供书源调试工具与书源分享规范
+支持配置与导入自编写的书源
 
 ---
 
 ## TODO
 
-- 支持更多阅读源格式  
+- 支持阅读源格式  
 - 优化搜索与内容加载体验  
 - UI 主题扩展  
 - 阅读进度云同步  
 - 计划支持 MacOS
-
+- 本地缓存下载  
+- 多书源支持 
 ---
 
 ## 构建与运行
