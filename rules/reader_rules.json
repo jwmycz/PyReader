@@ -1,0 +1,31 @@
+{
+    "book_sources": [
+        {
+			"title":	"御书网mobile",
+			"host":	"https://m.yushuoweb.com",
+			"query_url":	"https://m.yushuoweb.com/s.php",
+			"query_method":"POST",
+			"query_charset":	2,
+			"query_params":	"s=%s&type=articlename",
+			"query_types":	"Data",
+			"book_name_xpath":	"//p[@class=\"search_list\"]/a[1]/text()",
+			"book_mainpage_xpath":	"//p[@class=\"search_list\"]/a[1]/@href",
+			"book_author_xpath":	"//p[@class=\"search_list\"]/a[3]/text()",
+			"enable_chapter_page":	0,
+			"chapter_page_xpath":	"",
+			"chapter_title_xpath":	"//li/a/text()",
+			"chapter_url_xpath":	"//li/a//@href",
+			"enable_chapter_next":	1,
+			"chapter_next_url_xpath":	"//span[@class=\"right\"]/a/@href",
+			"chapter_next_keyword_xpath":	"//span[@class=\"right\"]/a/text()",
+			"chapter_next_keyword":	"下一页",
+			"content_xpath":	"//*[@id=\"novelcontent\"]/text()",
+			"enable_content_next":	1,
+			"content_next_url_xpath":	"//div[@class='chapterpage'][1]/a[3]/@href",
+			"content_next_keyword_xpath":	"//div[@class='chapterpage'][1]/a[3]",
+			"content_next_keyword":	"下一页",
+			"content_filter_type":	0,
+			"content_filter_keyword":	""
+		}
+    ]
+}

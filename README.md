@@ -64,6 +64,11 @@ python main.py
 欢迎提交 Issue 与 Pull Requests 一起完善软件
 
 ---
+## 更新
+
+- v1.0
+
+`实现基本功能`
 
 ## 许可证
 
