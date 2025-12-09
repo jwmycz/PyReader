@@ -24,3 +24,8 @@ TestResults.xml
 test/
 logs/
 .idea/
+icon/
+builds/
+build/
+dist/
+
